@@ -32,7 +32,7 @@ func FromHandle(h *store.Handle) *Handle {
 		ResponseCode: 1,
 		Values: []*HandleValue{
 			&HandleValue{
-				Timestamp: time.Unix(int64(h.Timestamp), 0).UTC().Format(time.RFC3339),
+				Timestamp: time.Unix(h.Timestamp, 0).UTC().Format(time.RFC3339),
 				Type:      h.Type,
 				Index:     h.Idx,
 				Ttl:       h.Ttl,

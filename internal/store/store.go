@@ -13,6 +13,7 @@ type Store struct {
 
 const (
 	SQL_SELECT_ROW = "SELECT handle, idx, type, data, ttl, ttl_type, timestamp, admin_read, admin_write, pub_read, pub_write FROM handles WHERE handle = ? AND type = 'URL' LIMIT 1"
+	SQL_DELETE     = "DELETE FROM handles WHERE handle = ?"
 )
 
 func NewStore(dsn string) (*Store, error) {
@@ -61,7 +62,36 @@ func (s *Store) Get(handle string) *Handle {
 
 func (s *Store) Delete(handle string) int64 {
 
-	res, err := s.db.Exec("DELETE FROM handles WHERE handle = ?", handle)
+	res, err := s.db.Exec(SQL_DELETE, handle)
+
+	if err != nil {
+
+		log.Fatal(err.Error())
+
+	}
+
+	rowsAffected, _ := res.RowsAffected()
+
+	return rowsAffected
+}
+
+func (s *Store) Add(h *Handle) int64 {
+
+	//cf. https://dev.mysql.com/doc/refman/8.0/en/replace.html
+	res, err := s.db.Exec(
+		"REPLACE INTO handles(handle,idx,type,data,ttl,ttl_type,timestamp,admin_read,admin_write,pub_read,pub_write) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+		h.Handle,
+		h.Idx,
+		h.Type,
+		h.Data,
+		h.Ttl,
+		h.TtlType,
+		h.Timestamp,
+		h.AdminRead,
+		h.AdminWrite,
+		h.PubRead,
+		h.PubWrite,
+	)
 
 	if err != nil {
 

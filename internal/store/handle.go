@@ -7,7 +7,7 @@ type Handle struct {
 	Data       string `json:"data"`
 	TtlType    int    `json:"ttl_type"`
 	Ttl        int    `json:"ttl"`
-	Timestamp  int    `json:"timestamp"`
+	Timestamp  int64  `json:"timestamp"`
 	AdminRead  bool   `json:"admin_read"`
 	AdminWrite bool   `json:"admin_write"`
 	PubRead    bool   `json:"pub_read"`
