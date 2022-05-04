@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -22,12 +23,43 @@ var (
 		"dsn":           "handle:handle@tcp(127.0.0.1:3306)/handle",
 		"auth_username": "handle",
 		"auth_password": "handle",
+		"prefix":        "",
 	}
+	prefix        string = ""
 	bind          string = ""
 	dsn           string = ""
-	auth_username        = ""
-	auth_password        = ""
+	auth_username string = ""
+	auth_password string = ""
 )
+
+func requirePrefix(next http.Handler) http.Handler {
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		pr := mux.Vars(r)["prefix"]
+
+		if pr == prefix {
+
+			next.ServeHTTP(w, r)
+			return
+
+		}
+
+		pHandle := presenters.EmptyResponse(pr, 102, "invalid prefix")
+		jsonResponse, jsonErr := json.Marshal(pHandle)
+
+		if jsonErr != nil {
+			http.Error(w, jsonErr.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(400)
+		w.Write(jsonResponse)
+
+	})
+
+}
 
 func basicAuthMiddleware(next http.Handler) http.Handler {
 
@@ -74,12 +106,18 @@ func main() {
 	}
 
 	// 2. override previous option by flag
+	flag.StringVar(&prefix, "prefix", default_options["prefix"], "prefix")
 	flag.StringVar(&bind, "bind", default_options["bind"], "bind")
 	flag.StringVar(&dsn, "dsn", default_options["dsn"], "dsn")
 	flag.StringVar(&auth_username, "auth-username", default_options["auth_username"], "basic auth username")
 	flag.StringVar(&auth_password, "auth-password", default_options["auth_password"], "basic auth password")
 
 	flag.Parse()
+
+	if prefix == "" {
+		fmt.Fprintf(os.Stderr, "-prefix not given\n")
+		os.Exit(1)
+	}
 
 	router := mux.NewRouter()
 	store, sErr := store.NewStore(dsn)
@@ -96,7 +134,9 @@ func main() {
 	handlesController := controllers.NewHandles(config)
 
 	handlesRouter := router.PathPrefix("/handles").Subrouter()
+
 	handlesRouter.Use(basicAuthMiddleware)
+	handlesRouter.Use(requirePrefix)
 
 	handlesRouter.HandleFunc("/{prefix}/{local_id}", handlesController.Get).
 		Methods("GET").

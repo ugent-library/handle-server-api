@@ -41,6 +41,16 @@ The application uses the following run options in order:
 
 * option from internal default
 
+**prefix**
+
+  required prefix.
+
+  Required: true
+
+  Environment variable: `HDL_PREFIX`
+
+  Default: there is no default
+
 **bind**
 
   Bind to host and address
