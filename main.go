@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +13,11 @@ import (
 	"github.ugent.be/Universiteitsbibliotheek/hdl-srv-api/internal/store"
 )
 
+var bind string = ":3000"
+var dsn string = "handle:handle@tcp(127.0.0.1:3306)/handle"
+var auth_username = "handle"
+var auth_password = "handle"
+
 func basicAuthMiddleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +25,7 @@ func basicAuthMiddleware(next http.Handler) http.Handler {
 		username, password, ok := r.BasicAuth()
 
 		if ok {
-			if username == "handle" && password == "handle" {
+			if username == auth_username && password == auth_password {
 
 				next.ServeHTTP(w, r)
 				return
@@ -34,8 +40,15 @@ func basicAuthMiddleware(next http.Handler) http.Handler {
 
 func main() {
 
+	flag.StringVar(&bind, "bind", bind, "bind")
+	flag.StringVar(&dsn, "dsn", dsn, "dsn")
+	flag.StringVar(&auth_username, "auth-username", auth_username, "basic auth username")
+	flag.StringVar(&auth_password, "auth-password", auth_password, "basic auth password")
+
+	flag.Parse()
+
 	router := mux.NewRouter()
-	store, sErr := store.NewStore("handle:handle@tcp(127.0.0.1:3307)/handle")
+	store, sErr := store.NewStore(dsn)
 
 	if sErr != nil {
 		log.Fatal(sErr.Error())
@@ -63,5 +76,5 @@ func main() {
 		Methods("PUT").
 		Name("upsert_handle")
 
-	log.Fatal(http.ListenAndServe(":3000", handlers.LoggingHandler(os.Stdout, router)))
+	log.Fatal(http.ListenAndServe(bind, handlers.LoggingHandler(os.Stdout, router)))
 }
