@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/handlers"
@@ -13,10 +14,18 @@ import (
 	"github.ugent.be/Universiteitsbibliotheek/hdl-srv-api/internal/store"
 )
 
-var bind string = ":3000"
-var dsn string = "handle:handle@tcp(127.0.0.1:3306)/handle"
-var auth_username = "handle"
-var auth_password = "handle"
+var (
+	default_options = map[string]string{
+		"bind":          ":3000",
+		"dsn":           "handle:handle@tcp(127.0.0.1:3306)/handle",
+		"auth_username": "handle",
+		"auth_password": "handle",
+	}
+	bind          string = ""
+	dsn           string = ""
+	auth_username        = ""
+	auth_password        = ""
+)
 
 func basicAuthMiddleware(next http.Handler) http.Handler {
 
@@ -40,10 +49,20 @@ func basicAuthMiddleware(next http.Handler) http.Handler {
 
 func main() {
 
-	flag.StringVar(&bind, "bind", bind, "bind")
-	flag.StringVar(&dsn, "dsn", dsn, "dsn")
-	flag.StringVar(&auth_username, "auth-username", auth_username, "basic auth username")
-	flag.StringVar(&auth_password, "auth-password", auth_password, "basic auth password")
+	// 1. override internal default by env
+	for key, _ := range default_options {
+		eKey := strings.ToUpper("hdl_" + key)
+		eVal := os.Getenv(eKey)
+		if eVal != "" {
+			default_options[key] = eVal
+		}
+	}
+
+	// 2. override previous option by flag
+	flag.StringVar(&bind, "bind", default_options["bind"], "bind")
+	flag.StringVar(&dsn, "dsn", default_options["dsn"], "dsn")
+	flag.StringVar(&auth_username, "auth-username", default_options["auth_username"], "basic auth username")
+	flag.StringVar(&auth_password, "auth-password", default_options["auth_password"], "basic auth password")
 
 	flag.Parse()
 

@@ -33,29 +33,45 @@ $ ./hdl-srv-api
 
 # Run options
 
+The application uses the following run options in order:
+
+* option from command line flag
+
+* option from environment variable (prefix `HDL_`, and all capital letters)
+
+* option from internal default
+
 **bind**
 
   Bind to host and address
 
-  Default: `:3000`
+  Environment variable: `HDL_BIND`
+
+  Internal default: `:3000`
 
 **dsn**
 
   SQL DSN to the database of handle.net
 
-  Default: `handle:handle@tcp(127.0.0.1:3306)/handle`
+  Environment variable: `HDL_DSN`
+
+  Internal default: `handle:handle@tcp(127.0.0.1:3306)/handle`
 
 **auth-username**
 
   Username for basic auth
 
-  Default: `handle`
+  Environment variable: `HDL_AUTH_USERNAME`
+
+  Internal default: `handle`
 
 **auth-password**
 
   Password for basic auth
 
-  Default: `handle`
+  Environment variable: `HDL_AUTH_PASSWORD`
+
+  Internal default: `handle`
 
 # API
 
