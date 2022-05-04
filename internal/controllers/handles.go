@@ -27,8 +27,14 @@ func (handles *Handles) Get(w http.ResponseWriter, r *http.Request) {
 	var handle *store.Handle
 	var pHandle *presenters.Handle
 	var status int = http.StatusOK
+	var hErr error
 
-	handle = handles.Store.Get(handleId)
+	handle, hErr = handles.Store.Get(handleId)
+
+	if hErr != nil {
+		http.Error(w, hErr.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	if handle == nil {
 
@@ -62,8 +68,15 @@ func (handles *Handles) Delete(w http.ResponseWriter, r *http.Request) {
 
 	var status int = http.StatusOK
 	var responseCode int = 1
-	var rowsAffected int64 = handles.Store.Delete(handleId)
+	var rowsAffected int64
+	var hErr error
+	rowsAffected, hErr = handles.Store.Delete(handleId)
 	var message string = ""
+
+	if hErr != nil {
+		http.Error(w, hErr.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	if rowsAffected == 0 {
 		responseCode = 100
@@ -120,8 +133,15 @@ func (handles *Handles) Upsert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var status int = 201
-	var rowsAffected int64 = handles.Store.Add(handle)
+	var rowsAffected int64
+	var hErr error
+	rowsAffected, hErr = handles.Store.Add(handle)
 	var pHandle *presenters.Handle
+
+	if hErr != nil {
+		http.Error(w, hErr.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	if rowsAffected == 0 {
 		status = http.StatusBadRequest

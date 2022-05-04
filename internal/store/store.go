@@ -2,7 +2,6 @@ package store
 
 import (
 	"database/sql"
-	"log"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -16,7 +15,8 @@ const (
 	SQL_DELETE     = "DELETE FROM handles WHERE handle = ?"
 )
 
-func NewStore(dsn string) (*Store, error) {
+func connect(dsn string) (*sql.DB, error) {
+
 	db, err := sql.Open("mysql", dsn)
 
 	if err != nil {
@@ -27,10 +27,24 @@ func NewStore(dsn string) (*Store, error) {
 	db.SetMaxIdleConns(3)
 	db.SetMaxOpenConns(3)
 
+	return db, nil
+}
+
+func NewStore(dsn string) (*Store, error) {
+	db, err := connect(dsn)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &Store{db: db}, nil
 }
 
-func (s *Store) Get(handle string) *Handle {
+func (s *Store) Get(handle string) (*Handle, error) {
+
+	if e := s.db.Ping(); e != nil {
+		return nil, e
+	}
 
 	var h Handle
 
@@ -51,31 +65,39 @@ func (s *Store) Get(handle string) *Handle {
 	if err != nil {
 
 		if err == sql.ErrNoRows {
-			return nil
+			return nil, nil
 		}
-		log.Fatal(err.Error())
+		return nil, err
 
 	}
 
-	return &h
+	return &h, nil
 }
 
-func (s *Store) Delete(handle string) int64 {
+func (s *Store) Delete(handle string) (int64, error) {
+
+	if e := s.db.Ping(); e != nil {
+		return 0, e
+	}
 
 	res, err := s.db.Exec(SQL_DELETE, handle)
 
 	if err != nil {
 
-		log.Fatal(err.Error())
+		return 0, err
 
 	}
 
 	rowsAffected, _ := res.RowsAffected()
 
-	return rowsAffected
+	return rowsAffected, nil
 }
 
-func (s *Store) Add(h *Handle) int64 {
+func (s *Store) Add(h *Handle) (int64, error) {
+
+	if e := s.db.Ping(); e != nil {
+		return 0, e
+	}
 
 	//cf. https://dev.mysql.com/doc/refman/8.0/en/replace.html
 	res, err := s.db.Exec(
@@ -95,11 +117,11 @@ func (s *Store) Add(h *Handle) int64 {
 
 	if err != nil {
 
-		log.Fatal(err.Error())
+		return 0, err
 
 	}
 
 	rowsAffected, _ := res.RowsAffected()
 
-	return rowsAffected
+	return rowsAffected, nil
 }
