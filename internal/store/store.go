@@ -24,8 +24,8 @@ func connect(dsn string) (*sql.DB, error) {
 	}
 
 	db.SetConnMaxLifetime(0)
-	db.SetMaxIdleConns(3)
-	db.SetMaxOpenConns(3)
+	db.SetMaxIdleConns(10)
+	db.SetMaxOpenConns(10)
 
 	return db, nil
 }
