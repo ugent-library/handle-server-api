@@ -36,21 +36,25 @@ $ ./hdl-srv-api
 **bind**
 
   Bind to host and address
+
   Default: `:3000`
 
 **dsn**
 
   SQL DSN to the database of handle.net
+
   Default: `handle:handle@tcp(127.0.0.1:3306)/handle`
 
 **auth-username**
 
   Username for basic auth
+
   Default: `handle`
 
 **auth-password**
 
   Password for basic auth
+
   Default: `handle`
 
 # API
@@ -91,9 +95,11 @@ Response:
 ```
 
 `responseCode: 1` means "successfull"
+
 `responseCode: 100` means "not found"
 
 but http status codes also help, although a 404
+
 may also mean that you've hit the wrong controller
 
 ## DELETE /handles/{prefix}/{local_id}
