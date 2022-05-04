@@ -23,6 +23,7 @@ type Handle struct {
 	Handle       string         `json:"handle"`
 	ResponseCode int            `json:"responseCode"`
 	Values       []*HandleValue `json:"values,omitempty"`
+	Message      string         `json:"message,omitempty"`
 }
 
 func FromHandle(h *store.Handle) *Handle {
@@ -46,9 +47,10 @@ func FromHandle(h *store.Handle) *Handle {
 
 }
 
-func EmptyResponse(h string, code int) *Handle {
+func EmptyResponse(h string, code int, message string) *Handle {
 	return &Handle{
 		Handle:       h,
 		ResponseCode: code,
+		Message:      message,
 	}
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"log"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.ugent.be/Universiteitsbibliotheek/hdl-srv-api/internal/controllers"
+	"github.ugent.be/Universiteitsbibliotheek/hdl-srv-api/internal/presenters"
 	"github.ugent.be/Universiteitsbibliotheek/hdl-srv-api/internal/store"
 )
 
@@ -41,9 +43,22 @@ func basicAuthMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
+		prefix := mux.Vars(r)["prefix"]
+		localId := mux.Vars(r)["local_id"]
+		handleId := prefix + "/" + localId
+
+		pHandle := presenters.EmptyResponse(handleId, 401, "not authenticated")
+		jsonResponse, jsonErr := json.Marshal(pHandle)
+
+		if jsonErr != nil {
+			http.Error(w, jsonErr.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		w.Header().Set("WWW-Authenticate", "Basic realm=hdl-srv-api")
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(401)
-		w.Write([]byte("Unauthorised.\n"))
+		w.Write(jsonResponse)
 	})
 }
 
@@ -78,11 +93,11 @@ func main() {
 		Store:  store,
 	}
 
-	router.Use(basicAuthMiddleware)
-
 	handlesController := controllers.NewHandles(config)
 
 	handlesRouter := router.PathPrefix("/handles").Subrouter()
+	handlesRouter.Use(basicAuthMiddleware)
+
 	handlesRouter.HandleFunc("/{prefix}/{local_id}", handlesController.Get).
 		Methods("GET").
 		Name("get_handle")

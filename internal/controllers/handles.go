@@ -33,7 +33,7 @@ func (handles *Handles) Get(w http.ResponseWriter, r *http.Request) {
 	if handle == nil {
 
 		status = http.StatusNotFound
-		pHandle = presenters.EmptyResponse(handleId, 100)
+		pHandle = presenters.EmptyResponse(handleId, 100, "handle not found")
 
 	} else {
 
@@ -63,13 +63,15 @@ func (handles *Handles) Delete(w http.ResponseWriter, r *http.Request) {
 	var status int = http.StatusOK
 	var responseCode int = 1
 	var rowsAffected int64 = handles.Store.Delete(handleId)
+	var message string = ""
 
 	if rowsAffected == 0 {
 		responseCode = 100
 		status = http.StatusNotFound
+		message = "handle not found"
 	}
 
-	pHandle := presenters.EmptyResponse(handleId, responseCode)
+	pHandle := presenters.EmptyResponse(handleId, responseCode, message)
 
 	jsonResponse, jsonErr := json.Marshal(pHandle)
 
@@ -123,7 +125,7 @@ func (handles *Handles) Upsert(w http.ResponseWriter, r *http.Request) {
 
 	if rowsAffected == 0 {
 		status = http.StatusBadRequest
-		pHandle = presenters.EmptyResponse(handleId, 100)
+		pHandle = presenters.EmptyResponse(handleId, 100, "handle not found")
 	} else {
 		status = 201
 		pHandle = presenters.FromHandle(handle)
