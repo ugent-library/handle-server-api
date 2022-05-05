@@ -115,7 +115,9 @@ func main() {
 	flag.Parse()
 
 	if prefix == "" {
-		fmt.Fprintf(os.Stderr, "-prefix not given\n")
+		fmt.Fprintf(os.Stderr, "Error: flag -prefix not given\n\n")
+		fmt.Fprintf(os.Stderr, "Usage:\n")
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
