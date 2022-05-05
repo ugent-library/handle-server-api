@@ -42,10 +42,6 @@ func NewStore(dsn string) (*Store, error) {
 
 func (s *Store) Get(handle string) (*Handle, error) {
 
-	if e := s.db.Ping(); e != nil {
-		return nil, e
-	}
-
 	var h Handle
 
 	err := s.db.QueryRow(SQL_SELECT_ROW, handle).
@@ -76,10 +72,6 @@ func (s *Store) Get(handle string) (*Handle, error) {
 
 func (s *Store) Delete(handle string) (int64, error) {
 
-	if e := s.db.Ping(); e != nil {
-		return 0, e
-	}
-
 	res, err := s.db.Exec(SQL_DELETE, handle)
 
 	if err != nil {
@@ -94,10 +86,6 @@ func (s *Store) Delete(handle string) (int64, error) {
 }
 
 func (s *Store) Add(h *Handle) (int64, error) {
-
-	if e := s.db.Ping(); e != nil {
-		return 0, e
-	}
 
 	//cf. https://dev.mysql.com/doc/refman/8.0/en/replace.html
 	res, err := s.db.Exec(
