@@ -1,2 +1,4 @@
 /hdl-srv-api
 /env.sh
+
+dist/
