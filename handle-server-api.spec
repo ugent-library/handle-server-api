@@ -1,5 +1,5 @@
-Name: hdl-srv-api
-Summary: hdl-srv-api
+Name: handle-server-api
+Summary: handle-server-api
 License: BSD
 Version: 0.1
 Release: X
@@ -21,8 +21,8 @@ Temporary rest api that directly inserts data into mysql of handle server
 %setup -q -n %{name}
 
 %build
-cd $RPM_BUILD_DIR/%{name} && 
-go build -o hdl-srv-api || exit 1
+cd $RPM_BUILD_DIR/%{name} &&
+go build -o handle-server-api || exit 1
 
 %install
 rm -rf %{buildroot}
@@ -30,7 +30,7 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}/opt/%{name}
 mkdir -p %{buildroot}/etc/systemd/system
 mkdir -p %{buildroot}/var/log/%{name}
-cp $RPM_BUILD_DIR/%{name}/hdl-srv-api %{buildroot}/opt/%{name}/hdl-srv-api
+cp $RPM_BUILD_DIR/%{name}/handle-server-api %{buildroot}/opt/%{name}/handle-server-api
 cp $RPM_BUILD_DIR/%{name}/etc/systemd/%{name}.service %{buildroot}/etc/systemd/system/
 
 %clean
@@ -46,15 +46,15 @@ rm -rf %{buildroot}
 
 %post
 systemctl daemon-reload &&
-systemctl enable hdl-srv-api &&
-systemctl restart hdl-srv-api
+systemctl enable handle-server-api &&
+systemctl restart handle-server-api
 
 exit 0
 
 %preun
 if [ $1 -eq "0" ] ; then
-  systemctl stop hdl-srv-api
-  systemctl disable hdl-srv-api
+  systemctl stop handle-server-api
+  systemctl disable handle-server-api
 fi
 
 exit 0

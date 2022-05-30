@@ -1,4 +1,4 @@
-hdl-srv-api
+handle-server-api
 -----------
 
 Temporary rest api that directly
@@ -12,7 +12,7 @@ Golang v1.17
 # Build
 
 ```
-$ cd hdl-srv-api
+$ cd handle-server-api
 $ go build
 ```
 
@@ -21,14 +21,14 @@ $ go build
 Live
 
 ```
-$ cd hdl-srv-api
+$ cd handle-server-api
 $ go run main.go
 ```
 
 Or after build
 
 ```
-$ ./hdl-srv-api
+$ ./handle-server-api
 ```
 
 # Run options

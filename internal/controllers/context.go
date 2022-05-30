@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"github.com/gorilla/mux"
-	"github.ugent.be/Universiteitsbibliotheek/hdl-srv-api/internal/store"
+	"github.ugent.be/Universiteitsbibliotheek/handle-server-api/internal/store"
 )
 
 type Context struct {

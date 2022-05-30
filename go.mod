@@ -1,4 +1,4 @@
-module github.ugent.be/Universiteitsbibliotheek/hdl-srv-api
+module github.ugent.be/Universiteitsbibliotheek/handle-server-api
 
 go 1.17
 

@@ -12,9 +12,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.ugent.be/Universiteitsbibliotheek/hdl-srv-api/internal/controllers"
-	"github.ugent.be/Universiteitsbibliotheek/hdl-srv-api/internal/presenters"
-	"github.ugent.be/Universiteitsbibliotheek/hdl-srv-api/internal/store"
+	"github.ugent.be/Universiteitsbibliotheek/handle-server-api/internal/controllers"
+	"github.ugent.be/Universiteitsbibliotheek/handle-server-api/internal/presenters"
+	"github.ugent.be/Universiteitsbibliotheek/handle-server-api/internal/store"
 )
 
 var (
@@ -87,7 +87,7 @@ func basicAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		w.Header().Set("WWW-Authenticate", "Basic realm=hdl-srv-api")
+		w.Header().Set("WWW-Authenticate", "Basic realm=handle-server-api")
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(401)
 		w.Write(jsonResponse)

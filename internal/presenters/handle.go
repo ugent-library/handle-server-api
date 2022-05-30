@@ -3,7 +3,7 @@ package presenters
 import (
 	"time"
 
-	"github.ugent.be/Universiteitsbibliotheek/hdl-srv-api/internal/store"
+	"github.ugent.be/Universiteitsbibliotheek/handle-server-api/internal/store"
 )
 
 type HandleData struct {

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.ugent.be/Universiteitsbibliotheek/hdl-srv-api/internal/presenters"
-	"github.ugent.be/Universiteitsbibliotheek/hdl-srv-api/internal/store"
+	"github.ugent.be/Universiteitsbibliotheek/handle-server-api/internal/presenters"
+	"github.ugent.be/Universiteitsbibliotheek/handle-server-api/internal/store"
 )
 
 type Handles struct {

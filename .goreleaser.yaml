@@ -38,16 +38,16 @@ nfpms:
       - linux-build
     release: 1
     license: "BSD"
-    bindir: "/opt/hdl-srv-api"
+    bindir: "/opt/handle-server-api"
     contents:
-      - src: "etc/systemd/hdl-srv-api.service"
-        dst: "/etc/systemd/system/hdl-srv-api.service"
+      - src: "etc/systemd/handle-server-api.service"
+        dst: "/etc/systemd/system/handle-server-api.service"
         type: "config"
         file_info:
           mode: 0755
           owner: "root"
           group: "root"
-      - dst: "/var/log/hdl-srv-api"
+      - dst: "/var/log/handle-server-api"
         type: "dir"
         file_info:
           mode: 0775

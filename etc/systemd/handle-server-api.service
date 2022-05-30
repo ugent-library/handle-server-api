@@ -1,0 +1,15 @@
+[Unit]
+Description=handle-server-api
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/sysconfig/handle-server-api.conf
+ExecStart=/opt/handle-server-api/handle-server-api >> /var/log/handle-server-api/access.log 2> /var/log/handle-server-api/error.log
+ExecReload=/bin/kill -HUP $MAINPID
+User=biblio
+Group=biblio
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
