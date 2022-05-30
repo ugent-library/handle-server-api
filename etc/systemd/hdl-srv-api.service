@@ -1,0 +1,15 @@
+[Unit]
+Description=hdl-srv-api
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/sysconfig/hdl-srv-api.conf
+ExecStart=/opt/hdl-srv-api/hdl-srv-api >> /var/log/hdl-srv-api/access.log 2> /var/log/hdl-srv-api/error.log
+ExecReload=/bin/kill -HUP $MAINPID
+User=biblio
+Group=biblio
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

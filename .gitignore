@@ -1,4 +1,4 @@
 /hdl-srv-api
 /env.sh
-
 dist/
+.DS_Store
