@@ -26,7 +26,7 @@ archives:
       linux: Linux
       amd64: x86_64
 snapshot:
-  name_template: "{{ incpatch .Version }}"
+  name_template: "0.1-{{ .Env.GIT_REVS }}"
 # to build rpm:
 # goreleaser release --skip-publish --snapshot
 nfpms:
