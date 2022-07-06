@@ -28,7 +28,7 @@ archives:
 snapshot:
   name_template: "0.1-{{ .Env.GIT_REVS }}"
 # to build rpm:
-# goreleaser release --skip-publish --snapshot
+# GIT_REVS=$(git rev-list --count) goreleaser release --skip-publish --snapshot
 nfpms:
   - description: "Temporary rest api that directly inserts data into mysql of handle server"
     maintainer: "Nicolas Franck <nicolas.franck@ugent.be"
