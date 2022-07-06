@@ -39,26 +39,26 @@ nfpms:
     release: 1
     license: "BSD"
     bindir: "/opt/handle-server-api"
-    contents:
-      - src: "etc/systemd/handle-server-api.service"
-        dst: "/etc/systemd/system/handle-server-api.service"
-        type: "config"
-        file_info:
-          mode: 0755
-          owner: "root"
-          group: "root"
-      - dst: "/var/log/handle-server-api"
-        type: "dir"
-        file_info:
-          mode: 0775
-          owner: "biblio"
-          group: "biblio"
-    scripts:
-      # cf. https://github.com/goreleaser/nfpm/blob/main/rpm/rpm.go#L280
-      # postinstall -> %post
-      postinstall: "etc/rpm/postinstall.sh"
-      # preremove -> %preun
-      preremove: "etc/rpm/preun.sh"
+#    contents:
+#      - src: "etc/systemd/handle-server-api.service"
+#        dst: "/etc/systemd/system/handle-server-api.service"
+#        type: "config"
+#        file_info:
+#          mode: 0755
+#          owner: "root"
+#          group: "root"
+#      - dst: "/var/log/handle-server-api"
+#        type: "dir"
+#        file_info:
+#          mode: 0775
+#          owner: "biblio"
+#          group: "biblio"
+#    scripts:
+#      # cf. https://github.com/goreleaser/nfpm/blob/main/rpm/rpm.go#L280
+#      # postinstall -> %post
+#      postinstall: "etc/rpm/postinstall.sh"
+#      # preremove -> %preun
+#      preremove: "etc/rpm/preun.sh"
     replacements:
       darwin: Darwin
       linux: Linux
