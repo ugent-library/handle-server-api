@@ -5,10 +5,14 @@ After=network.target
 [Service]
 Type=simple
 EnvironmentFile=/etc/sysconfig/handle-server-api.conf
-ExecStart=/opt/handle-server-api/handle-server-api >> /var/log/handle-server-api/access.log 2> /var/log/handle-server-api/error.log
+ExecStart=/opt/handle-server-api/handle-server-api
 ExecReload=/bin/kill -HUP $MAINPID
 User=biblio
 Group=biblio
+# TODO: only more recent versions of systemd support "file:" or "append:"
+# file redirect in ExecStart has no effect
+StandardOutput=journal
+StandardError=journal
 Restart=always
 
 [Install]

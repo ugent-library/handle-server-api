@@ -47,12 +47,13 @@ nfpms:
           mode: 0755
           owner: "root"
           group: "root"
-      - dst: "/var/log/handle-server-api"
-        type: "dir"
-        file_info:
-          mode: 0775
-          owner: "biblio"
-          group: "biblio"
+# TODO: uncomment when systemd supports "file:"
+#      - dst: "/var/log/handle-server-api"
+#        type: "dir"
+#        file_info:
+#          mode: 0775
+#          owner: "biblio"
+#          group: "biblio"
     scripts:
       # cf. https://github.com/goreleaser/nfpm/blob/main/rpm/rpm.go#L280
       # postinstall -> %post
