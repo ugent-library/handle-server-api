@@ -27,12 +27,11 @@ type Handle struct {
 }
 
 func FromHandle(h *store.Handle) *Handle {
-
 	return &Handle{
 		Handle:       h.Handle,
 		ResponseCode: 1,
 		Values: []*HandleValue{
-			&HandleValue{
+			{
 				Timestamp: time.Unix(h.Timestamp, 0).UTC().Format(time.RFC3339),
 				Type:      h.Type,
 				Index:     h.Idx,

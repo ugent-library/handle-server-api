@@ -4,17 +4,21 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
+	"github.com/ory/graceful"
+	"github.com/ugent-library/zaphttp"
+	"github.com/ugent-library/zaphttp/zapchi"
 	"github.ugent.be/Universiteitsbibliotheek/handle-server-api/internal/controllers"
 	"github.ugent.be/Universiteitsbibliotheek/handle-server-api/internal/presenters"
 	"github.ugent.be/Universiteitsbibliotheek/handle-server-api/internal/store"
+	"go.uber.org/zap"
 )
 
 var (
@@ -32,17 +36,24 @@ var (
 	auth_password string = ""
 )
 
+var logger *zap.SugaredLogger
+
+func initLogger() {
+	var l *zap.Logger
+	var err error
+	l, err = zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
+	logger = l.Sugar()
+}
+
 func requirePrefix(next http.Handler) http.Handler {
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		pr := mux.Vars(r)["prefix"]
-
+		pr := chi.URLParam(r, "prefix")
 		if pr == prefix {
-
 			next.ServeHTTP(w, r)
 			return
-
 		}
 
 		pHandle := presenters.EmptyResponse(pr, 102, "invalid prefix")
@@ -56,27 +67,22 @@ func requirePrefix(next http.Handler) http.Handler {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(400)
 		w.Write(jsonResponse)
-
 	})
-
 }
 
 func basicAuthMiddleware(next http.Handler) http.Handler {
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		username, password, ok := r.BasicAuth()
 
 		if ok {
 			if username == auth_username && password == auth_password {
-
 				next.ServeHTTP(w, r)
 				return
 			}
 		}
 
-		prefix := mux.Vars(r)["prefix"]
-		localId := mux.Vars(r)["local_id"]
+		prefix := chi.URLParam(r, "prefix")
+		localId := chi.URLParam(r, "local_id")
 		handleId := prefix + "/" + localId
 
 		pHandle := presenters.EmptyResponse(handleId, 401, "not authenticated")
@@ -95,7 +101,6 @@ func basicAuthMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
-
 	// 1. override internal default by env
 	for key, _ := range default_options {
 		eKey := strings.ToUpper("hdl_" + key)
@@ -111,7 +116,6 @@ func main() {
 	flag.StringVar(&dsn, "dsn", default_options["dsn"], "dsn")
 	flag.StringVar(&auth_username, "auth-username", default_options["auth_username"], "basic auth username")
 	flag.StringVar(&auth_password, "auth-password", default_options["auth_password"], "basic auth password")
-
 	flag.Parse()
 
 	if prefix == "" {
@@ -121,36 +125,42 @@ func main() {
 		os.Exit(1)
 	}
 
-	router := mux.NewRouter()
-	store, sErr := store.NewStore(dsn)
+	initLogger()
 
-	if sErr != nil {
-		log.Fatal(sErr.Error())
+	mux := chi.NewRouter()
+	mux.Use(middleware.RequestID)
+	mux.Use(middleware.RealIP)
+	mux.Use(zaphttp.SetLogger(logger.Desugar(), zapchi.RequestID))
+	mux.Use(middleware.RequestLogger(zapchi.LogFormatter()))
+	mux.Use(middleware.Recoverer)
+
+	store, err := store.NewStore(dsn)
+	if err != nil {
+		logger.Fatal(err)
 	}
 
-	config := controllers.Context{
-		Router: router,
-		Store:  store,
+	handlesController := controllers.NewHandles(controllers.Context{
+		Store: store,
+	})
+
+	mux.Route("/handles", func(r chi.Router) {
+		r.With(basicAuthMiddleware, requirePrefix).Route("/{prefix}/{local_id}", func(r chi.Router) {
+			r.Get("/", handlesController.Get)
+			r.Delete("/", handlesController.Delete)
+			r.Put("/", handlesController.Upsert)
+		})
+	})
+
+	srv := graceful.WithDefaults(&http.Server{
+		Addr:         bind,
+		Handler:      mux,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	})
+
+	logger.Info("starting handle-server-api")
+	if err := graceful.Graceful(srv.ListenAndServe, srv.Shutdown); err != nil {
+		logger.Fatal(err)
 	}
-
-	handlesController := controllers.NewHandles(config)
-
-	handlesRouter := router.PathPrefix("/handles").Subrouter()
-
-	handlesRouter.Use(basicAuthMiddleware)
-	handlesRouter.Use(requirePrefix)
-
-	handlesRouter.HandleFunc("/{prefix}/{local_id}", handlesController.Get).
-		Methods("GET").
-		Name("get_handle")
-
-	handlesRouter.HandleFunc("/{prefix}/{local_id}", handlesController.Delete).
-		Methods("DELETE").
-		Name("delete_handle")
-
-	handlesRouter.HandleFunc("/{prefix}/{local_id}", handlesController.Upsert).
-		Methods("PUT").
-		Name("upsert_handle")
-
-	log.Fatal(http.ListenAndServe(bind, handlers.LoggingHandler(os.Stdout, router)))
+	logger.Info("gracefully stopped server")
 }

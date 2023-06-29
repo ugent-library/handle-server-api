@@ -2,3 +2,4 @@
 /env.sh
 dist/
 .DS_Store
+/handle-server-api

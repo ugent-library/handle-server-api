@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.ugent.be/Universiteitsbibliotheek/handle-server-api/internal/presenters"
 	"github.ugent.be/Universiteitsbibliotheek/handle-server-api/internal/store"
 )
@@ -19,9 +19,8 @@ func NewHandles(c Context) *Handles {
 }
 
 func (handles *Handles) Get(w http.ResponseWriter, r *http.Request) {
-
-	prefix := mux.Vars(r)["prefix"]
-	localId := mux.Vars(r)["local_id"]
+	prefix := chi.URLParam(r, "prefix")
+	localId := chi.URLParam(r, "local_id")
 	handleId := prefix + "/" + localId
 
 	var handle *store.Handle
@@ -37,15 +36,11 @@ func (handles *Handles) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if handle == nil {
-
 		status = http.StatusNotFound
 		pHandle = presenters.EmptyResponse(handleId, 100, "handle not found")
-
 	} else {
-
 		status = http.StatusOK
 		pHandle = presenters.FromHandle(handle)
-
 	}
 
 	jsonResponse, jsonErr := json.Marshal(pHandle)
@@ -61,9 +56,8 @@ func (handles *Handles) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handles *Handles) Delete(w http.ResponseWriter, r *http.Request) {
-
-	prefix := mux.Vars(r)["prefix"]
-	localId := mux.Vars(r)["local_id"]
+	prefix := chi.URLParam(r, "prefix")
+	localId := chi.URLParam(r, "local_id")
 	handleId := prefix + "/" + localId
 
 	var status int = http.StatusOK
@@ -99,9 +93,8 @@ func (handles *Handles) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handles *Handles) Upsert(w http.ResponseWriter, r *http.Request) {
-
-	prefix := mux.Vars(r)["prefix"]
-	localId := mux.Vars(r)["local_id"]
+	prefix := chi.URLParam(r, "prefix")
+	localId := chi.URLParam(r, "local_id")
 	handleId := prefix + "/" + localId
 
 	parseErr := r.ParseForm()
