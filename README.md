@@ -3,7 +3,7 @@ handle-server-api
 
 Temporary rest api that directly
 
-inserts data into mysql of handle server
+inserts data into postgres of handle server
 
 # Build requirements
 
@@ -65,7 +65,7 @@ The application uses the following run options in order:
 
   Environment variable: `HDL_DSN`
 
-  Internal default: `handle:handle@tcp(127.0.0.1:3306)/handle`
+  Internal default: `handle:handle@tcp(127.0.0.1:5432)/handle?sslmode=disable`
 
 **auth-username**
 

@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/ory/graceful"
 	"github.com/ugent-library/zaphttp"
 	"github.com/ugent-library/zaphttp/zapchi"
@@ -24,7 +23,7 @@ import (
 var (
 	default_options = map[string]string{
 		"bind":          ":3000",
-		"dsn":           "handle:handle@tcp(127.0.0.1:3306)/handle",
+		"dsn":           "handle:handle@tcp(127.0.0.1:5432)/handle?sslmode=disable",
 		"auth_username": "handle",
 		"auth_password": "handle",
 		"prefix":        "",

@@ -3,7 +3,7 @@ package store
 import (
 	"database/sql"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type Store struct {
@@ -11,13 +11,13 @@ type Store struct {
 }
 
 const (
-	SQL_SELECT_ROW = "SELECT handle, idx, type, data, ttl, ttl_type, timestamp, admin_read, admin_write, pub_read, pub_write FROM handles WHERE handle = ? AND type = 'URL' LIMIT 1"
-	SQL_DELETE     = "DELETE FROM handles WHERE handle = ?"
+	SQL_SELECT_ROW = "SELECT handle, idx, type, data, ttl, ttl_type, timestamp, admin_read, admin_write, pub_read, pub_write FROM handles WHERE handle = $1 AND type = 'URL' LIMIT 1"
+	SQL_DELETE     = "DELETE FROM handles WHERE handle = $1"
 )
 
 func connect(dsn string) (*sql.DB, error) {
 
-	db, err := sql.Open("mysql", dsn)
+	db, err := sql.Open("pgx", dsn)
 
 	if err != nil {
 		return nil, err
@@ -87,9 +87,24 @@ func (s *Store) Delete(handle string) (int64, error) {
 
 func (s *Store) Add(h *Handle) (int64, error) {
 
-	//cf. https://dev.mysql.com/doc/refman/8.0/en/replace.html
+	sql := `
+INSERT INTO handles(handle,idx,type,data,ttl,ttl_type,timestamp,admin_read,admin_write,pub_read,pub_write)
+VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+ON CONFLICT (handle, idx) DO UPDATE SET
+idx = excluded.idx,
+type = excluded.type,
+data = excluded.data,
+ttl = excluded.ttl,
+ttl_type = excluded.ttl_type,
+timestamp = excluded.timestamp,
+admin_read = excluded.admin_read,
+admin_write = excluded.admin_write,
+pub_read = excluded.pub_read,
+pub_write = excluded.pub_write
+`
+
 	res, err := s.db.Exec(
-		"REPLACE INTO handles(handle,idx,type,data,ttl,ttl_type,timestamp,admin_read,admin_write,pub_read,pub_write) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+		sql,
 		h.Handle,
 		h.Idx,
 		h.Type,
