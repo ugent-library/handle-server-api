@@ -1,5 +1,5 @@
 # build stage
-FROM golang:alpine AS build
+FROM golang:1.19-alpine AS build
 WORKDIR /build
 COPY . .
 RUN go get -d -v ./...
@@ -9,7 +9,16 @@ RUN go build -buildvcs=false -o handle-server-api -v
 
 # final stage
 FROM alpine:latest
+
+ARG SOURCE_BRANCH
+ARG SOURCE_COMMIT
+ARG IMAGE_NAME
+ENV SOURCE_BRANCH $SOURCE_BRANCH
+ENV SOURCE_COMMIT $SOURCE_COMMIT
+ENV IMAGE_NAME $IMAGE_NAME
+
 WORKDIR /dist
-COPY --from=build /build .
+
+COPY --from=build /build/handle-server-api handle-server-api
 EXPOSE 3000
-CMD "/dist/handle-server-api"
+CMD ["/dist/handle-server-api", "server"]

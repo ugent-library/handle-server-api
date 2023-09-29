@@ -7,7 +7,7 @@ inserts data into postgres of handle server
 
 # Build requirements
 
-Golang v1.17
+Golang v1.19
 
 # Build
 
@@ -22,66 +22,56 @@ Live
 
 ```
 $ cd handle-server-api
-$ go run main.go
+$ go run main.go server
 ```
 
 Or after build
 
 ```
-$ ./handle-server-api
+$ ./handle-server-api server
 ```
 
-# Run options
+# Runtime options
 
-The application uses the following run options in order:
+Runtime options can be set with the following environment variables.
 
-* option from command line flag
-
-* option from environment variable (prefix `HDL_`, and all capital letters)
-
-* option from internal default
-
-**prefix**
+* `HDL_PREFIX`
 
   required prefix.
 
   Required: true
 
-  Environment variable: `HDL_PREFIX`
-
   Default: there is no default
 
-**bind**
+* `HDL_HOST`
 
-  Bind to host and address
+  Host to bind to
 
-  Environment variable: `HDL_BIND`
+  Default: `0.0.0.0`
 
-  Internal default: `:3000`
+* `HDL_PORT`
 
-**dsn**
+  Port to bind to
+
+  Default: `3000`
+
+* `HDL_DSN`
 
   SQL DSN to the database of handle.net
 
-  Environment variable: `HDL_DSN`
+  Default: `handle:handle@tcp(127.0.0.1:5432)/handle?sslmode=disable`
 
-  Internal default: `handle:handle@tcp(127.0.0.1:5432)/handle?sslmode=disable`
-
-**auth-username**
+* `HDL_AUTH_USERNAME`
 
   Username for basic auth
 
-  Environment variable: `HDL_AUTH_USERNAME`
+  Default: `handle`
 
-  Internal default: `handle`
-
-**auth-password**
+* `HDL_AUTH_PASSWORD`
 
   Password for basic auth
 
-  Environment variable: `HDL_AUTH_PASSWORD`
-
-  Internal default: `handle`
+  Default: `handle`
 
 # API
 
@@ -91,7 +81,7 @@ See [Technical Manual Version 9](http://www.handle.net/tech_manual/HN_Tech_Manua
 
 All endpoint require basic http authentication.
 
-See run options `-auth-username` and `auth-password` above
+See environment variable `HDL_AUTH_USERNAME` and `HDL_AUTH_PASSWORD` above
 
 ## GET /handles/{prefix}/{local_id}
 
@@ -139,3 +129,7 @@ Insert/replace all handle value for handle `{prefix}/{local_id}`
 Only body parameter `url` is supported
 
 Returns same response as the GET controller
+
+# Notes
+
+* Environment can also indirectly be set by placing a file called `.env` in the current directory, and adding all environment variables (but WITHOUT keyword `export `!).

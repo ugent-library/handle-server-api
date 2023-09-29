@@ -18,7 +18,7 @@ func NewHandles(c Context) *Handles {
 	return &Handles{c}
 }
 
-func (handles *Handles) Get(w http.ResponseWriter, r *http.Request) {
+func (h *Handles) Get(w http.ResponseWriter, r *http.Request) {
 	prefix := chi.URLParam(r, "prefix")
 	localId := chi.URLParam(r, "local_id")
 	handleId := prefix + "/" + localId
@@ -26,12 +26,11 @@ func (handles *Handles) Get(w http.ResponseWriter, r *http.Request) {
 	var handle *store.Handle
 	var pHandle *presenters.Handle
 	var status int = http.StatusOK
-	var hErr error
+	var err error
 
-	handle, hErr = handles.Store.Get(handleId)
-
-	if hErr != nil {
-		http.Error(w, hErr.Error(), http.StatusInternalServerError)
+	handle, err = h.Store.Get(handleId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -43,34 +42,31 @@ func (handles *Handles) Get(w http.ResponseWriter, r *http.Request) {
 		pHandle = presenters.FromHandle(handle)
 	}
 
-	jsonResponse, jsonErr := json.Marshal(pHandle)
-
-	if jsonErr != nil {
-		http.Error(w, jsonErr.Error(), http.StatusInternalServerError)
+	bytes, err := json.Marshal(pHandle)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	w.Write(jsonResponse)
+	w.Write(bytes)
 }
 
-func (handles *Handles) Delete(w http.ResponseWriter, r *http.Request) {
+func (h *Handles) Delete(w http.ResponseWriter, r *http.Request) {
 	prefix := chi.URLParam(r, "prefix")
 	localId := chi.URLParam(r, "local_id")
 	handleId := prefix + "/" + localId
 
-	var status int = http.StatusOK
-	var responseCode int = 1
-	var rowsAffected int64
-	var hErr error
-	rowsAffected, hErr = handles.Store.Delete(handleId)
-	var message string = ""
-
-	if hErr != nil {
-		http.Error(w, hErr.Error(), http.StatusInternalServerError)
+	rowsAffected, err := h.Store.Delete(handleId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	var status int = http.StatusOK
+	var responseCode int = 1
+	var message string = ""
 
 	if rowsAffected == 0 {
 		responseCode = 100
@@ -80,38 +76,35 @@ func (handles *Handles) Delete(w http.ResponseWriter, r *http.Request) {
 
 	pHandle := presenters.EmptyResponse(handleId, responseCode, message)
 
-	jsonResponse, jsonErr := json.Marshal(pHandle)
-
-	if jsonErr != nil {
-		http.Error(w, jsonErr.Error(), http.StatusInternalServerError)
+	bytes, err := json.Marshal(pHandle)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	w.Write(jsonResponse)
+	w.Write(bytes)
 }
 
-func (handles *Handles) Upsert(w http.ResponseWriter, r *http.Request) {
+func (h *Handles) Upsert(w http.ResponseWriter, r *http.Request) {
 	prefix := chi.URLParam(r, "prefix")
 	localId := chi.URLParam(r, "local_id")
 	handleId := prefix + "/" + localId
 
-	parseErr := r.ParseForm()
-
-	if parseErr != nil {
-		http.Error(w, parseErr.Error(), http.StatusInternalServerError)
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	var url string = r.FormValue("url")
-
 	if url == "" {
 		http.Error(w, "url not given", http.StatusBadRequest)
 		return
 	}
 
-	var handle *store.Handle = &store.Handle{
+	handle := &store.Handle{
 		Handle:     handleId,
 		Idx:        1,
 		Type:       "URL",
@@ -125,33 +118,30 @@ func (handles *Handles) Upsert(w http.ResponseWriter, r *http.Request) {
 		PubWrite:   false,
 	}
 
-	var status int = 201
-	var rowsAffected int64
-	var hErr error
-	rowsAffected, hErr = handles.Store.Add(handle)
-	var pHandle *presenters.Handle
-
-	if hErr != nil {
-		http.Error(w, hErr.Error(), http.StatusInternalServerError)
+	rowsAffected, err := h.Store.Add(handle)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	var status int = http.StatusCreated
+	var pHandle *presenters.Handle
 
 	if rowsAffected == 0 {
 		status = http.StatusBadRequest
 		pHandle = presenters.EmptyResponse(handleId, 100, "handle not found")
 	} else {
-		status = 201
+		status = http.StatusCreated
 		pHandle = presenters.FromHandle(handle)
 	}
 
-	jsonResponse, jsonErr := json.Marshal(pHandle)
-
-	if jsonErr != nil {
-		http.Error(w, jsonErr.Error(), http.StatusInternalServerError)
+	bytes, err := json.Marshal(pHandle)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	w.Write(jsonResponse)
+	w.Write(bytes)
 }

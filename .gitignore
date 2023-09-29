@@ -1,5 +1,6 @@
 /hdl-srv-api
 /env.sh
+/.env
 dist/
 .DS_Store
 /handle-server-api
