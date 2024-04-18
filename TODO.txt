@@ -1,0 +1,2 @@
+* remove .goreleaser.yaml
+* remove etc/
