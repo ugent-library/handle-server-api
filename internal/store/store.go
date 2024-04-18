@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
@@ -38,10 +39,10 @@ func NewStore(dsn string) (*Store, error) {
 	return &Store{db: db}, nil
 }
 
-func (s *Store) Get(handle string) (*Handle, error) {
+func (s *Store) Get(ctx context.Context, handle string) (*Handle, error) {
 	var h Handle
 
-	err := s.db.QueryRow(SQL_SELECT_ROW, handle).
+	err := s.db.QueryRowContext(ctx, SQL_SELECT_ROW, handle).
 		Scan(
 			&h.Handle,
 			&h.Idx,
@@ -64,8 +65,8 @@ func (s *Store) Get(handle string) (*Handle, error) {
 	return &h, nil
 }
 
-func (s *Store) Delete(handle string) (int64, error) {
-	res, err := s.db.Exec(SQL_DELETE_ROW, handle)
+func (s *Store) Delete(ctx context.Context, handle string) (int64, error) {
+	res, err := s.db.ExecContext(ctx, SQL_DELETE_ROW, handle)
 	if err != nil {
 		return 0, err
 	}
@@ -78,7 +79,7 @@ func (s *Store) Delete(handle string) (int64, error) {
 	return rowsAffected, nil
 }
 
-func (s *Store) Add(h *Handle) (int64, error) {
+func (s *Store) Add(ctx context.Context, h *Handle) (int64, error) {
 	sql := `
 INSERT INTO handles(handle,idx,type,data,ttl,ttl_type,timestamp,admin_read,admin_write,pub_read,pub_write)
 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
@@ -95,7 +96,8 @@ pub_read = excluded.pub_read,
 pub_write = excluded.pub_write
 `
 
-	res, err := s.db.Exec(
+	res, err := s.db.ExecContext(
+		ctx,
 		sql,
 		h.Handle,
 		h.Idx,
@@ -119,4 +121,8 @@ pub_write = excluded.pub_write
 	}
 
 	return rowsAffected, nil
+}
+
+func (s *Store) Ping(ctx context.Context) error {
+	return s.db.PingContext(ctx)
 }

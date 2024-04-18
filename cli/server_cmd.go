@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/alexliesenfeld/health"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/ory/graceful"
@@ -110,6 +111,13 @@ var serverCmd = &cobra.Command{
 			})
 			w.Write(bytes)
 		})
+		mux.Get("/status", health.NewHandler(health.NewChecker(
+			health.WithCheck(health.Check{
+				Name:    "database",
+				Timeout: 5 * time.Second,
+				Check:   store.Ping,
+			}),
+		)))
 
 		srv := graceful.WithDefaults(&http.Server{
 			Addr:         fmt.Sprintf("%s:%d", config.Host, config.Port),

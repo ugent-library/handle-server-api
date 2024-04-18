@@ -28,7 +28,7 @@ func (h *Handles) Get(w http.ResponseWriter, r *http.Request) {
 	var status int = http.StatusOK
 	var err error
 
-	handle, err = h.Store.Get(handleId)
+	handle, err = h.Store.Get(r.Context(), handleId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -58,7 +58,7 @@ func (h *Handles) Delete(w http.ResponseWriter, r *http.Request) {
 	localId := chi.URLParam(r, "local_id")
 	handleId := prefix + "/" + localId
 
-	rowsAffected, err := h.Store.Delete(handleId)
+	rowsAffected, err := h.Store.Delete(r.Context(), handleId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -118,7 +118,7 @@ func (h *Handles) Upsert(w http.ResponseWriter, r *http.Request) {
 		PubWrite:   false,
 	}
 
-	rowsAffected, err := h.Store.Add(handle)
+	rowsAffected, err := h.Store.Add(r.Context(), handle)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
