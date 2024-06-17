@@ -5,7 +5,7 @@ COPY . .
 RUN go get -d -v ./...
 # avoid error "error obtaining VCS status: exec: "git": executable file not found in $PATH"
 # by adding -buildvcs=false
-RUN go build -buildvcs=false -o app -v
+RUN go build -buildvcs=false -o handle-server-api -v
 
 # final stage
 FROM alpine:latest
@@ -19,6 +19,6 @@ ENV IMAGE_NAME $IMAGE_NAME
 
 WORKDIR /dist
 
-COPY --from=build /build/app app
+COPY --from=build /build/handle-server-api handle-server-api
 EXPOSE 3000
-CMD ["/dist/app", "server"]
+CMD ["/dist/handle-server-api", "server"]
