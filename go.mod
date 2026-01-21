@@ -1,6 +1,6 @@
 module github.ugent.be/Universiteitsbibliotheek/handle-server-api
 
-go 1.19
+go 1.24.0
 
 require (
 	github.com/caarlos0/env/v8 v8.0.0
@@ -22,6 +22,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/crypto v0.11.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 )
