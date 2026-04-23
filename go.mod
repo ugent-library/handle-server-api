@@ -1,11 +1,12 @@
 module github.ugent.be/Universiteitsbibliotheek/handle-server-api
 
-go 1.24.0
+go 1.25.0
 
 require (
+	github.com/alexliesenfeld/health v0.8.1
 	github.com/caarlos0/env/v8 v8.0.0
 	github.com/go-chi/chi/v5 v5.2.4
-	github.com/jackc/pgx/v5 v5.8.0
+	github.com/jackc/pgx/v5 v5.9.2
 	github.com/joho/godotenv v1.5.1
 	github.com/ory/graceful v0.2.0
 	github.com/spf13/cobra v1.10.2
@@ -14,7 +15,6 @@ require (
 )
 
 require (
-	github.com/alexliesenfeld/health v0.8.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
