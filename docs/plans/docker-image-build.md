@@ -25,10 +25,10 @@ There is no need to repeat the test in *What we tested*: it shows how Go's `cryp
 | `hooks/build` | does not exist |
 | Build and test commands | `go build -buildvcs=false -o handle-server-api`, `go vet ./...` (there are no tests and no Makefile) |
 | Running containers | *to look up* (number of Nomad allocations) |
-| Branches | `master` is the main branch (GitHub default). `main` and `dev` also exist, all three at `13a47e6` on 2026-10-29; also `pg` and a dependabot branch for pgx 5.9.2. Moving to `main` only is a follow-up issue |
+| Branches | `master` is the main branch (GitHub default). `dev` was at `13a47e6`, the same commit as `master`, on 2026-10-29. `main` is at `db1dc6a` (`v0.0.3`, 2024-06-17), far behind. Also `pg` and a dependabot branch for pgx 5.9.2. Moving to `main` only is a follow-up issue |
 | Merge commit message | `merge <branch>: <summary>`, lowercase like the rest of the history (the convention set in resolver) |
-| Releases | git tags `v0.0.1` to `v0.0.6`, no GitHub releases checked yet; `v0.0.6` is on `13a47e6` |
-| Docker Hub build rules | branch `dev` → tag `dev`, branch `master` → tag `master`, git tag `vX.Y.Z` → tag `release-vX.Y.Z` (looked up 2026-10-29). Which image tag production runs is *to confirm*; if it is a `release-*` tag, A6 needs a new git tag |
+| Releases | annotated git tags `v0.0.1` to `v0.0.6` (no `v0.0.4`), each with a GitHub release except `v0.0.1`. A release is made by tagging the next patch version on `master`, pushing `master` and the tag, and writing a GitHub release with a short note of what changed. All tags are on `master`'s first-parent line except `v0.0.5` (`99cf6f6`), which was tagged on a side branch before `master` merged it in `13a47e6` (`v0.0.6`) |
+| Docker Hub build rules | branch `dev` → tag `dev`, branch `master` → tag `master`, git tag `vX.Y.Z` → tag `release-vX.Y.Z` (looked up 2026-10-29). Production is released by a new git tag, so A6 needs `v0.0.7` |
 
 The Dockerfile declares `ARG SOURCE_BRANCH`, `SOURCE_COMMIT` and `IMAGE_NAME` and copies them into `ENV`, but without a `hooks/build` Docker Hub does not pass them, so they are empty in the running image. The `/info` endpoint returns them (`config.Version`), so today it answers `{}`. The hook added in A3 fills them in.
 
@@ -81,7 +81,7 @@ We take both fixes, so that a later mistake in one (a stale bundle, a toolchain 
 
 - **Periodic rebuilds.** Docker Hub builds only on a push or a manual trigger. `SNAPSHOT_EPOCH` makes a build that runs pick up new packages; it does not make a build happen. If a project goes months without a push, its image keeps an old Go and an old bundle. Decide how rebuilds happen between code changes: by hand after each Go point release and Alpine security update, or on a schedule from outside Docker Hub. Check what Docker Hub currently offers for triggering builds before choosing. *Ingest chose by hand; resolver moved the question to its `docs/plans/docker-image-slim.md`. handle-server-api: open.*
 - **Raise the `go` directive in go.mod?** Raising it to `go 1.27.3` makes a build on an older toolchain fail outright, because the official golang images set `GOTOOLCHAIN=local`. It also forces every developer onto 1.27.3 (Go downloads it automatically unless `GOTOOLCHAIN=local` is set locally). Pinning the image tag already fixes the Docker build; this would add a check that stops a stale toolchain anywhere. *Ingest and resolver both raised it; resolver also ran `go get -u ./...` and `go mod tidy` and compared the old and new build side by side before merging. Of the GODEBUG defaults the new directive switches on, only `containermaxprocs`/`updatemaxprocs` mattered there: `GOMAXPROCS` follows a hard CPU limit on the container, if the Nomad job sets one. handle-server-api: raised to `go 1.27.3` (decided 2026-10-29), without updating dependencies; the pgx update is a follow-up issue. Test that the build compiles and the API behaves as before.*
-- **Docker Hub "Build caching" setting.** Look up whether it is on for the repository (Builds, Configure automated builds). If it is off, every build already starts from scratch and the EPOCH argument only matters if caching is turned on later. Keep the argument either way, so the Dockerfile does not depend on that setting. *Resolver: on. handle-server-api: to look up.*
+- **Docker Hub "Build caching" setting.** Look up whether it is on for the repository (Builds, Configure automated builds). If it is off, every build already starts from scratch and the EPOCH argument only matters if caching is turned on later. Keep the argument either way, so the Dockerfile does not depend on that setting. *Resolver: on. handle-server-api: on (2026-10-29), so the EPOCH argument is what keeps the packages current.*
 
 ## Part A: pick up both fixes
 
@@ -97,7 +97,7 @@ The fix branches from `master`, not `dev`, so that releasing it does not also re
 - [x] Change the build stage to `FROM golang:1.27.3-alpine AS build`.
 - [x] Decide the go.mod question above; if yes, change the `go` directive to `1.27.3` in the same commit. *handle-server-api: raised with `go mod edit -go=1.27.3` and `go mod tidy`. Tidy changed no versions: it moved `alexliesenfeld/health` from indirect to direct (it has been imported directly since the health check was added) and added the `stretchr/objx` checksums to go.sum.*
 - [x] Update *Build requirements* in the README (it says Golang v1.24.0).
-- [ ] Build locally with `docker build --pull` and check which toolchain built the binary: copy it out with `docker create` and `docker cp <container>:/dist/handle-server-api ./handle-server-api`, then run `go version ./handle-server-api` on the host. It must print `go1.27.3`. *handle-server-api (2026-10-29): `go1.27.3`; the image built from `master` prints `go1.24.0`.*
+- [x] Build locally with `docker build --pull` and check which toolchain built the binary: copy it out with `docker create` and `docker cp <container>:/dist/handle-server-api ./handle-server-api`, then run `go version ./handle-server-api` on the host. It must print `go1.27.3`. *handle-server-api (2026-10-29): `go1.27.3`; the image built from `master` prints `go1.24.0`.*
 
 ### A2. CA bundle, kept current
 
@@ -111,7 +111,7 @@ The fix branches from `master`, not `dev`, so that releasing it does not also re
   RUN apk upgrade --no-cache
   ```
 
-- [ ] Check the result: `docker run --rm --entrypoint apk <image> list -I ca-certificates-bundle` shows `ca-certificates-bundle-20261020-r0` or later. Grepping the bundle for "emSign" proves nothing: `/etc/ssl/certs/ca-certificates.crt` holds PEM blocks only, without the root names, so the count is always 0. *handle-server-api (2026-10-29): `ca-certificates-bundle-20261020-r0` on Alpine 3.24.3. A local rebuild of `master` shows the same bundle, but only because `alpine:latest` was pulled fresh; the image production runs now may be older.*
+- [x] Check the result: `docker run --rm --entrypoint apk <image> list -I ca-certificates-bundle` shows `ca-certificates-bundle-20261020-r0` or later. Grepping the bundle for "emSign" proves nothing: `/etc/ssl/certs/ca-certificates.crt` holds PEM blocks only, without the root names, so the count is always 0. *handle-server-api (2026-10-29): `ca-certificates-bundle-20261020-r0` on Alpine 3.24.3. A local rebuild of `master` shows the same bundle, but only because `alpine:latest` was pulled fresh; the image production runs now may be older.*
 
 ### A3. Docker Hub build hook
 
@@ -142,35 +142,35 @@ The fix branches from `master`, not `dev`, so that releasing it does not also re
 
 - [x] Make it executable (`chmod +x hooks/build`) and commit the mode.
 - [x] Run the hook locally with `DOCKERFILE_PATH=Dockerfile IMAGE_NAME=handle-server-api:local hooks/build` to check it works outside Docker Hub: it prints the three values, pulls both base images, and runs `apk upgrade` rather than showing `CACHED`. *handle-server-api (2026-10-29): on a second run the `go build` layer was `CACHED` and `apk upgrade` ran again; `env` in the image shows `SOURCE_BRANCH`, `SOURCE_COMMIT` and `IMAGE_NAME`.*
-- [ ] Look up the Docker Hub "Build caching" setting and record the answer in this plan.
+- [x] Look up the Docker Hub "Build caching" setting and record the answer in this plan. *handle-server-api: on.*
 
 ### A4. Check locally
 
 - [x] Run the build and test commands from *This project* with the Go 1.27.3 toolchain. Also run `go mod verify` and `gofmt -l .`. *handle-server-api (2026-10-29): `go build` and `go vet ./...` pass, all modules verified, `gofmt` clean.*
 - [x] Run the image against a local Postgres with the handle schema (`HDL_DSN` and `HDL_PREFIX` as in `.env.example`): `/status` answers, and a `PUT`, `GET` and `DELETE` on `/handles/{prefix}/{local_id}` with basic auth behave as the README describes. Check that `env` in the container shows `SOURCE_BRANCH` and `SOURCE_COMMIT`. *handle-server-api (2026-10-29): `postgres:16-alpine` with the handle.net `handles` table (bytea columns, primary key `handle, idx`), one seeded handle with a URL and an `HS_ADMIN` row, DSN without `sslmode` as in production. The image built from `master` and the new image each got the same 17 requests: `/status`, `/info`, no auth, wrong password, wrong prefix, `GET` missing, `PUT` without `url`, `PUT` new, `GET`, `PUT` replace, `GET`, `GET` seeded, `DELETE`, `GET` deleted, `DELETE` again, `POST` (405), unknown path. The responses are identical (status, content type, body with timestamps masked) except `/info`, which answered `{}` before and now shows branch, commit and image. No errors or panics in either log; the seeded rows were untouched.*
-- [ ] Look up the Docker Hub build rules, the running containers and production's DSN mode, and record them in *This project*. Steps A5 and A6 depend on them. If no rule builds `dev`, or there is no development environment, A4 is the only test before production; then also test against a copy of the production database, or with production's `sslmode` if it verifies certificates.
+- [x] Look up the Docker Hub build rules, the running containers and production's DSN mode, and record them in *This project*. Steps A5 and A6 depend on them. If no rule builds `dev`, or there is no development environment, A4 is the only test before production; then also test against a copy of the production database, or with production's `sslmode` if it verifies certificates.
 
 ### A5. Merge into dev and test there
 
-- [ ] Merge the feature branch into `dev` with a merge commit: `git switch dev && git pull --ff-only && git merge --no-ff docker-image-build`, with the merge commit message from *This project*.
-- [ ] Push `dev`. Docker Hub builds from what is pushed, so the development environment can only be tested after this push.
-- [ ] In the Docker Hub build log, check that the hook ran (it prints `SOURCE_BRANCH`, `SOURCE_COMMIT` and `IMAGE_NAME`) and that the `apk upgrade` step ran rather than showing `CACHED`.
-- [ ] Pull the image Docker Hub built and repeat the checks from A1 and A2: `go version` on the binary and the bundle version. Also check that `env` shows non-empty `SOURCE_BRANCH` and `SOURCE_COMMIT`.
-- [ ] Deploy to the development environment. Open a shell in every running allocation and run the command below. Type the path itself: a placeholder such as `<binary>` makes the shell read `<` as a redirect and fail with a syntax error.
+- [x] Merge the feature branch into `dev` with a merge commit: `git switch dev && git pull --ff-only && git merge --no-ff docker-image-build`, with the merge commit message from *This project*. *handle-server-api (2026-10-29): `09ad989`, "merge docker-image-build: go 1.27.3, alpine 3.24, current CA bundle".*
+- [x] Push `dev`. Docker Hub builds from what is pushed, so the development environment can only be tested after this push.
+- [x] In the Docker Hub build log, check that the hook ran (it prints `SOURCE_BRANCH`, `SOURCE_COMMIT` and `IMAGE_NAME`) and that the `apk upgrade` step ran rather than showing `CACHED`. *handle-server-api (2026-10-29): the log prints `dev`, `09ad989…` and `index.docker.io/ugentlib/handle-server-api:dev`; `apk upgrade` ran (`OK: 8208 KiB in 16 packages`).*
+- [x] Pull the image Docker Hub built and repeat the checks from A1 and A2: `go version` on the binary and the bundle version. Also check that `env` shows non-empty `SOURCE_BRANCH` and `SOURCE_COMMIT`. *handle-server-api: covered by the check in the running allocation below and by `/info`.*
+- [x] Deploy to the development environment. Open a shell in every running allocation and run the command below. Type the path itself: a placeholder such as `<binary>` makes the shell read `<` as a redirect and fail with a syntax error.
 
   ```sh
   grep -a -o -E -m1 "go1\.[0-9]+\.[0-9]+" /dist/handle-server-api | head -1; apk list -I ca-certificates-bundle
   ```
 
-  It must print `go1.27.3` and `ca-certificates-bundle-20261020-r0` or later. The image has no Go toolchain, but the binary holds its Go version as text, which BusyBox `grep` can read.
-- [ ] Check that the service works as before on the development environment: `/status`, and a `GET` on a known handle.
-- [ ] Trigger a second Docker Hub build of `dev` without code changes and check that the `apk upgrade` step runs again. Skip this if Build caching is off.
+  It must print `go1.27.3` and `ca-certificates-bundle-20261020-r0` or later. The image has no Go toolchain, but the binary holds its Go version as text, which BusyBox `grep` can read. *handle-server-api (2026-10-29): `go1.27.3` and `ca-certificates-bundle-20261020-r0 x86_64`.*
+- [x] Check that the service works as before on the development environment: `/status`, and a `GET` on a known handle. *handle-server-api (2026-10-29): both work, and `/info` shows the right branch, commit and image.*
+- [x] Trigger a second Docker Hub build of `dev` without code changes and check that the `apk upgrade` step runs again. Skip this if Build caching is off. *handle-server-api (2026-10-29): same commit `09ad989`, `apk upgrade` ran again (`OK: 8208 KiB in 16 packages`, `DONE 1.9s`), not `CACHED`.*
 
 ### A6. Merge into master and release
 
 - [ ] Merge the feature branch into `master` with a merge commit: `git switch master && git pull --ff-only && git merge --no-ff docker-image-build`, with the merge commit message from *This project*. Merge the feature branch, not `dev`, so nothing else from `dev` comes along.
 - [ ] Push `master`.
-- [ ] Decide whether a release is needed. It is if production runs an image built from a tag: a new tag is then the only way to get the new Dockerfile into production, because rebuilding the old tag rebuilds the old Dockerfile. If production runs the image built from `master`, the push is enough.
+- [x] Decide whether a release is needed. It is if production runs an image built from a tag: a new tag is then the only way to get the new Dockerfile into production, because rebuilding the old tag rebuilds the old Dockerfile. If production runs the image built from `master`, the push is enough. *handle-server-api: needed; production is released by a git tag.*
 - [ ] If a release is needed: create `v0.0.7` as an annotated tag on the merge commit on `master`, push the tag, and write a GitHub release that says the image is rebuilt with Go 1.27.3 and the updated CA bundle to move off unsupported Go 1.24 and pick up current Alpine packages, with no other changes and no upgrade steps.
 - [ ] Deploy to production and run the same check in every running allocation as in A5.
 - [ ] Delete the feature branch, locally and on GitHub if it was pushed.
