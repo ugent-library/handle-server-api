@@ -7,7 +7,7 @@ inserts data into postgres of handle server
 
 # Build requirements
 
-Golang v1.24.0
+Golang v1.27.3
 
 # Build
 
