@@ -1,6 +1,6 @@
 # Plan: rebuild the container image with current Go and CA certificates
 
-**Status:** part A done; released as `v0.0.7` and deployed to production on 2026-10-29. Copied from resolver's archived plan (`resolver/docs/archive/docker-image-build.md`) on 2026-10-29. Ingest and resolver have both done part A; their answers to the open questions are noted below as precedent.
+**Status:** archived 2026-10-29. Part A done: released as `v0.0.7` and deployed to production on 2026-10-29. Rebuilds are manual. Follow-up issues: #7 (move to `main`), #8 (update dependencies). Copied from resolver's archived plan (`resolver/docs/archive/docker-image-build.md`) on 2026-10-29. Ingest and resolver have both done part A; their answers to the open questions are noted below as precedent.
 
 ## Reusing this plan in another project
 
@@ -79,7 +79,7 @@ We take both fixes, so that a later mistake in one (a stale bundle, a toolchain 
 
 ## Open questions
 
-- **Periodic rebuilds.** Docker Hub builds only on a push or a manual trigger. `SNAPSHOT_EPOCH` makes a build that runs pick up new packages; it does not make a build happen. If a project goes months without a push, its image keeps an old Go and an old bundle. Decide how rebuilds happen between code changes: by hand after each Go point release and Alpine security update, or on a schedule from outside Docker Hub. Check what Docker Hub currently offers for triggering builds before choosing. *Ingest chose by hand; resolver moved the question to its `docs/plans/docker-image-slim.md`. handle-server-api: open.*
+- **Periodic rebuilds.** Docker Hub builds only on a push or a manual trigger. `SNAPSHOT_EPOCH` makes a build that runs pick up new packages; it does not make a build happen. If a project goes months without a push, its image keeps an old Go and an old bundle. Decide how rebuilds happen between code changes: by hand after each Go point release and Alpine security update, or on a schedule from outside Docker Hub. Check what Docker Hub currently offers for triggering builds before choosing. *Ingest chose by hand; resolver moved the question to its `docs/plans/docker-image-slim.md`. handle-server-api: by hand (2026-10-29).*
 - **Raise the `go` directive in go.mod?** Raising it to `go 1.27.3` makes a build on an older toolchain fail outright, because the official golang images set `GOTOOLCHAIN=local`. It also forces every developer onto 1.27.3 (Go downloads it automatically unless `GOTOOLCHAIN=local` is set locally). Pinning the image tag already fixes the Docker build; this would add a check that stops a stale toolchain anywhere. *Ingest and resolver both raised it; resolver also ran `go get -u ./...` and `go mod tidy` and compared the old and new build side by side before merging. Of the GODEBUG defaults the new directive switches on, only `containermaxprocs`/`updatemaxprocs` mattered there: `GOMAXPROCS` follows a hard CPU limit on the container, if the Nomad job sets one. handle-server-api: raised to `go 1.27.3` (decided 2026-10-29), without updating dependencies; the pgx update is a follow-up issue. Test that the build compiles and the API behaves as before.*
 - **Docker Hub "Build caching" setting.** Look up whether it is on for the repository (Builds, Configure automated builds). If it is off, every build already starts from scratch and the EPOCH argument only matters if caching is turned on later. Keep the argument either way, so the Dockerfile does not depend on that setting. *Resolver: on. handle-server-api: on (2026-10-29), so the EPOCH argument is what keeps the packages current.*
 
@@ -173,8 +173,8 @@ The fix branches from `master`, not `dev`, so that releasing it does not also re
 - [x] Decide whether a release is needed. It is if production runs an image built from a tag: a new tag is then the only way to get the new Dockerfile into production, because rebuilding the old tag rebuilds the old Dockerfile. If production runs the image built from `master`, the push is enough. *handle-server-api: needed; production is released by a git tag.*
 - [x] If a release is needed: create `v0.0.7` as an annotated tag on the merge commit on `master`, push the tag, and write a GitHub release that says the image is rebuilt with Go 1.27.3 and the updated CA bundle to move off unsupported Go 1.24 and pick up current Alpine packages, with no other changes and no upgrade steps. *handle-server-api (2026-10-29): annotated tag `v0.0.7` on `d0d0467` (the merge plus a plan update), GitHub release `v0.0.7`. On the push GitHub reported 4 Dependabot alerts on `master` (2 critical, 1 moderate, 1 low); see the pgx follow-up issue.*
 - [x] Deploy to production and run the same check in every running allocation as in A5. *handle-server-api (2026-10-29): image `release-0.0.7`; both allocations print `go1.27.3` and `ca-certificates-bundle-20261020-r0 x86_64`. `/status` and a `GET` on a known handle work; `/info` shows branch `v0.0.7`, commit `d0d0467…`, image `index.docker.io/ugentlib/handle-server-api:release-0.0.7`.*
-- [ ] Delete the feature branch, locally and on GitHub if it was pushed.
-- [ ] Decide the periodic rebuild question and record the answer here.
+- [x] Delete the feature branch, locally and on GitHub if it was pushed. *handle-server-api: deleted locally; it was never pushed.*
+- [x] Decide the periodic rebuild question and record the answer here. *handle-server-api: by hand.*
 
 ## Part B
 
@@ -184,10 +184,10 @@ None. The final stage already copies only the binary, so the cleanup resolver ne
 
 To create once this plan is done:
 
-- [ ] Move to `main` as the only branch and deprecate `master` (Docker Hub build rules, GitHub default branch, the `dev` merge flow).
-- [ ] Update the Go dependencies, starting with pgx (dependabot branch for pgx 5.9.2).
+- [x] Move to `main` as the only branch and deprecate `master` (Docker Hub build rules, GitHub default branch, the `dev` merge flow). *#7*
+- [x] Update the Go dependencies, starting with pgx (dependabot branch for pgx 5.9.2). *#8, which also covers the chi alert and refers to PR #6.*
 
 ## Retiring the plan
 
-- [ ] Describe how the image is built (Docker Hub, `hooks/build`, the `SNAPSHOT_EPOCH` argument, pinned base images, how rebuilds are triggered) in the README, so the next person to bump Go or Alpine knows which lines to change.
-- [ ] Move this plan to `docs/archive/` or delete it.
+- [x] Describe how the image is built (Docker Hub, `hooks/build`, the `SNAPSHOT_EPOCH` argument, pinned base images, how rebuilds are triggered) in the README, so the next person to bump Go or Alpine knows which lines to change. *handle-server-api: not needed (decided 2026-10-29).*
+- [x] Move this plan to `docs/archive/` or delete it. *handle-server-api: archived 2026-10-29.*
