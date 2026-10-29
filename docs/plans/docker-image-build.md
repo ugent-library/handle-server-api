@@ -24,7 +24,7 @@ There is no need to repeat the test in *What we tested*: it shows how Go's `cryp
 | `go` directive in go.mod | `go 1.24.0` |
 | `hooks/build` | does not exist |
 | Build and test commands | `go build -buildvcs=false -o handle-server-api`, `go vet ./...` (there are no tests and no Makefile) |
-| Running containers | *to look up* (number of Nomad allocations) |
+| Running containers | one Nomad allocation in the development environment, one in production |
 | Branches | `master` is the main branch (GitHub default). `dev` was at `13a47e6`, the same commit as `master`, on 2026-10-29. `main` is at `db1dc6a` (`v0.0.3`, 2024-06-17), far behind. Also `pg` and a dependabot branch for pgx 5.9.2. Moving to `main` only is a follow-up issue |
 | Merge commit message | `merge <branch>: <summary>`, lowercase like the rest of the history (the convention set in resolver) |
 | Releases | annotated git tags `v0.0.1` to `v0.0.6` (no `v0.0.4`), each with a GitHub release except `v0.0.1`. A release is made by tagging the next patch version on `master`, pushing `master` and the tag, and writing a GitHub release with a short note of what changed. All tags are on `master`'s first-parent line except `v0.0.5` (`99cf6f6`), which was tagged on a side branch before `master` merged it in `13a47e6` (`v0.0.6`) |
