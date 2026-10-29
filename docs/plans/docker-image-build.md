@@ -1,6 +1,6 @@
 # Plan: rebuild the container image with current Go and CA certificates
 
-**Status:** in progress. Copied from resolver's archived plan (`resolver/docs/archive/docker-image-build.md`) on 2026-10-29. Ingest and resolver have both done part A; their answers to the open questions are noted below as precedent.
+**Status:** part A done; released as `v0.0.7` and deployed to production on 2026-10-29. Copied from resolver's archived plan (`resolver/docs/archive/docker-image-build.md`) on 2026-10-29. Ingest and resolver have both done part A; their answers to the open questions are noted below as precedent.
 
 ## Reusing this plan in another project
 
@@ -24,11 +24,11 @@ There is no need to repeat the test in *What we tested*: it shows how Go's `cryp
 | `go` directive in go.mod | `go 1.24.0` |
 | `hooks/build` | does not exist |
 | Build and test commands | `go build -buildvcs=false -o handle-server-api`, `go vet ./...` (there are no tests and no Makefile) |
-| Running containers | one Nomad allocation in the development environment, one in production |
+| Running containers | one Nomad allocation in the development environment, two in production |
 | Branches | `master` is the main branch (GitHub default). `dev` was at `13a47e6`, the same commit as `master`, on 2026-10-29. `main` is at `db1dc6a` (`v0.0.3`, 2024-06-17), far behind. Also `pg` and a dependabot branch for pgx 5.9.2. Moving to `main` only is a follow-up issue |
 | Merge commit message | `merge <branch>: <summary>`, lowercase like the rest of the history (the convention set in resolver) |
 | Releases | annotated git tags `v0.0.1` to `v0.0.6` (no `v0.0.4`), each with a GitHub release except `v0.0.1`. A release is made by tagging the next patch version on `master`, pushing `master` and the tag, and writing a GitHub release with a short note of what changed. All tags are on `master`'s first-parent line except `v0.0.5` (`99cf6f6`), which was tagged on a side branch before `master` merged it in `13a47e6` (`v0.0.6`) |
-| Docker Hub build rules | branch `dev` → tag `dev`, branch `master` → tag `master`, git tag `vX.Y.Z` → tag `release-vX.Y.Z` (looked up 2026-10-29). Production is released by a new git tag, so A6 needs `v0.0.7` |
+| Docker Hub build rules | branch `dev` → tag `dev`, branch `master` → tag `master`, git tag `vX.Y.Z` → tag `release-X.Y.Z`, without the `v` (looked up 2026-10-29; `v0.0.7` built `release-0.0.7`). Production is released by a new git tag, so A6 needs `v0.0.7` |
 
 The Dockerfile declares `ARG SOURCE_BRANCH`, `SOURCE_COMMIT` and `IMAGE_NAME` and copies them into `ENV`, but without a `hooks/build` Docker Hub does not pass them, so they are empty in the running image. The `/info` endpoint returns them (`config.Version`), so today it answers `{}`. The hook added in A3 fills them in.
 
@@ -168,11 +168,11 @@ The fix branches from `master`, not `dev`, so that releasing it does not also re
 
 ### A6. Merge into master and release
 
-- [ ] Merge the feature branch into `master` with a merge commit: `git switch master && git pull --ff-only && git merge --no-ff docker-image-build`, with the merge commit message from *This project*. Merge the feature branch, not `dev`, so nothing else from `dev` comes along.
-- [ ] Push `master`.
+- [x] Merge the feature branch into `master` with a merge commit: `git switch master && git pull --ff-only && git merge --no-ff docker-image-build`, with the merge commit message from *This project*. Merge the feature branch, not `dev`, so nothing else from `dev` comes along. *handle-server-api (2026-10-29): `f1bc352`, same message as on `dev`.*
+- [x] Push `master`.
 - [x] Decide whether a release is needed. It is if production runs an image built from a tag: a new tag is then the only way to get the new Dockerfile into production, because rebuilding the old tag rebuilds the old Dockerfile. If production runs the image built from `master`, the push is enough. *handle-server-api: needed; production is released by a git tag.*
-- [ ] If a release is needed: create `v0.0.7` as an annotated tag on the merge commit on `master`, push the tag, and write a GitHub release that says the image is rebuilt with Go 1.27.3 and the updated CA bundle to move off unsupported Go 1.24 and pick up current Alpine packages, with no other changes and no upgrade steps.
-- [ ] Deploy to production and run the same check in every running allocation as in A5.
+- [x] If a release is needed: create `v0.0.7` as an annotated tag on the merge commit on `master`, push the tag, and write a GitHub release that says the image is rebuilt with Go 1.27.3 and the updated CA bundle to move off unsupported Go 1.24 and pick up current Alpine packages, with no other changes and no upgrade steps. *handle-server-api (2026-10-29): annotated tag `v0.0.7` on `d0d0467` (the merge plus a plan update), GitHub release `v0.0.7`. On the push GitHub reported 4 Dependabot alerts on `master` (2 critical, 1 moderate, 1 low); see the pgx follow-up issue.*
+- [x] Deploy to production and run the same check in every running allocation as in A5. *handle-server-api (2026-10-29): image `release-0.0.7`; both allocations print `go1.27.3` and `ca-certificates-bundle-20261020-r0 x86_64`. `/status` and a `GET` on a known handle work; `/info` shows branch `v0.0.7`, commit `d0d0467…`, image `index.docker.io/ugentlib/handle-server-api:release-0.0.7`.*
 - [ ] Delete the feature branch, locally and on GitHub if it was pushed.
 - [ ] Decide the periodic rebuild question and record the answer here.
 
